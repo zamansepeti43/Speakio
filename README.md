@@ -6,7 +6,7 @@ Speakio, konuşarak dil öğrenme fikri üzerine geliştirilen **mobil-first, ç
 
 - Ana sayfa, günlük hedef, XP ve streak
 - İngilizce A1 kurs haritası
-- 12 ders / 48 temel cümle
+- 12 ders / temel cümleler
 - Ders içi çoktan seçmeli alıştırmalar
 - Ders tamamlama ve XP kazanımı
 - Ders sonuç ekranı
@@ -27,22 +27,43 @@ Speakio, konuşarak dil öğrenme fikri üzerine geliştirilen **mobil-first, ç
 
 ## İçerik sistemi
 
-İlk müfredat İngilizce A1 için günlük hayatta kullanılabilecek konulara ayrılmıştır:
+Speakio'nun A1 içerik kaynak dosyası **`content/a1-curriculum.json`** olarak eklendi. Dosya 12 üniteyi pedagojik bir şema ile tanımlar:
 
-1. Selamlaşma
+- öğrenme hedefi
+- kelime listesi
+- dil bilgisi konusu
+- hedef cümleler ve Türkçe anlamları
+- kısa diyalog
+- dinleme cümleleri
+- konuşma görevleri
+- çoktan seçmeli sorular
+- çeviri soruları
+- cümle kurma soruları
+- final tekrar ve mastery hedefi
+
+A1 üniteleri:
+
+1. Selamlaşma ve Tanışma
 2. Kendini Tanıtma
-3. Sayılar ve Yaş
-4. Aile
-5. Yiyecekler
-6. Ev
+3. Sayılar, Saat ve Yaş
+4. Aile ve İnsanlar
+5. Yiyecek ve İçecek
+6. Ev ve Eşyalar
 7. Günlük Rutin
 8. İş ve Meslek
 9. Şehir ve Yönler
 10. Alışveriş
-11. Seyahat
-12. Geçmiş Zaman
+11. Seyahat ve Otel
+12. Geçmiş Zaman ve Tekrar
 
-Her ders kısa cümleler, Türkçe anlam, İngilizce karşılık, seslendirme ve cevap kontrolü içerir. Buna ek olarak kelime, dinleme, dil bilgisi ve gerçek hayat senaryoları bulunur.
+### Harici açık veri politikası
+
+Cümle veri kaynağı olarak **Tatoeba** seçildi. Tatoeba'nın indirme sayfasında genel cümle verileri **CC BY 2.0 FR**, uygun kayıtların bir bölümü ise **CC0 1.0** olarak yayımlanıyor. Bu nedenle Speakio'ya aktarılacak her harici cümle için kaynak kaydı, lisans ve gerekli atıf korunmalı; ses kayıtlarının lisansı ayrıca kontrol edilmelidir.
+
+Kaynak: https://tatoeba.org/tr/downloads
+API: https://api.tatoeba.org/
+
+**Not:** `a1-curriculum.json` içindeki pedagojik çekirdek içerik Speakio'nun uygulama içeriğidir. Tatoeba'dan ileride içeriğe aktarılacak kayıtlar, kaynak ID'si ve lisans bilgisiyle ayrı bir import katmanında tutulmalıdır.
 
 ## Çalıştırma
 
@@ -50,10 +71,12 @@ Statik sürüm olduğu için `index.html` bir web sunucusunda veya GitHub Pages 
 
 ## Sonraki ürün aşaması
 
+- A1 içerik kaynağını uygulama ekranlarına tam bağlama
+- Tatoeba'dan lisans kontrollü cümle import katmanı
+- A2 → B1 → B2 → C1 kapsamlı müfredat
 - Supabase kullanıcı hesabı ve bulut senkronizasyonu
 - Sunucu tabanlı gerçek AI öğretmen
 - Telaffuz puanlama motoru
-- A1 → A2 → B1 → B2 → C1 kapsamlı müfredat
 - Spaced repetition kelime motoru
 - Daha gelişmiş sesli konuşma değerlendirmesi
 - Premium üyelik
