@@ -27,4 +27,4 @@ window.getSpeakioListening=()=>window.getSpeakioUnits().flatMap(u=>(u.listening|
 window.getSpeakioSpeaking=()=>window.getSpeakioUnits().flatMap(u=>(u.speaking||[]).map(prompt=>({unitId:u.id,unit:u.title,prompt})));
 window.getSpeakioExercises=id=>window.getSpeakioUnit(id)?.exercises||[];
 window.getSpeakioDialogue=id=>window.getSpeakioUnit(id)?.dialogue||[];
-setTimeout(()=>{['runtime-fixes.js?v=3','build-fix.js?v=3'].forEach(src=>{const s=document.createElement('script');s.src=src;s.defer=true;document.head.appendChild(s)})},0);
+setTimeout(()=>{['runtime-fixes.js?v=3','build-fix.js?v=3','../course-system.js?v=1'].forEach(src=>{const s=document.createElement('script');s.src='./content/'+src;s.defer=true;document.head.appendChild(s)})},0);
