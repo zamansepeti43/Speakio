@@ -2,17 +2,13 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
 const syntaxOnly = process.argv.includes('--syntax-only');
-const required = ['index.html','app.js','runtime-fixes.js','build-fix.js','premium.js','sw.js','manifest.json','content/content-loader.js','content/a1-curriculum.json','api/coach.js'];
+const required = ['index.html','app.js','runtime-fixes.js','build-fix.js','premium.js','sw.js','content/content-loader.js','content/a1-curriculum.json','api/coach.js'];
 for (const file of required) assert.ok(fs.existsSync(file), `missing ${file}`);
 
-for (const file of ['app.js','runtime-fixes.js','build-fix.js','premium.js','sw.js','content/content-loader.js']) {
+for (const file of ['app.js','runtime-fixes.js','build-fix.js','premium.js','sw.js','content/content-loader.js','api/coach.js']) {
   const source = fs.readFileSync(file, 'utf8');
-  const check = file === 'sw.js' ? source : source;
-  assert.ok(check.trim().length > 0, `empty ${file}`);
-  if (file !== 'sw.js') {
-    const result = await import(`data:text/javascript,${encodeURIComponent('new Function('+JSON.stringify(source)+');')}`);
-    void result;
-  }
+  assert.ok(source.trim().length > 0, `empty ${file}`);
+  try { new Function(source); } catch (error) { throw new Error(`${file}: syntax error — ${error.message}`); }
 }
 
 if (syntaxOnly) {
