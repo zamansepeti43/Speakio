@@ -1,45 +1,43 @@
 # Speakio 🗣️
 
-Speakio, konuşarak dil öğrenme fikri üzerine geliştirilen **mobil-first, çalışan dil öğrenme MVP'sidir**.
+Speakio, **konuşarak dil öğrenme** üzerine kurulmuş mobil-first bir İngilizce öğrenme uygulamasıdır. Mevcut sürüm A1 çekirdek öğrenme döngüsünü çalışır halde sunar: ders → alıştırma → tekrar → dinleme → konuşma → ilerleme.
 
-## Çalışan özellikler
+## Mevcut sürüm
 
 - Ana sayfa, günlük hedef, XP ve streak
 - İngilizce A1 kurs haritası
-- 12 ders / temel cümleler
-- Ders içi çoktan seçmeli alıştırmalar
-- Ders tamamlama ve XP kazanımı
-- Ders sonuç ekranı
-- AI Speak konuşma pratiği
-- Tarayıcı Speech Recognition ile mikrofon girişi (destekleyen tarayıcılarda)
-- Tarayıcı Speech Synthesis ile İngilizce seslendirme
-- Kural tabanlı konuşma koçu geri bildirimi
-- Kelime Hafızası ve kayıtlı kelimeler
-- Dinleme alıştırmaları
-- Dil bilgisi mini dersleri
-- Gerçek hayat konuşma senaryoları
-- Başarılar ve kilitli/açık rozetler
-- Profil ve haftalık XP görünümü
-- Ayarlar
-- LocalStorage ile kalıcı cihaz içi ilerleme
-- PWA manifesti ve temel offline service worker
-- Responsive mobil tasarım
+- **12 A1 ünite / 48 egzersiz**
+- Çoktan seçmeli, çeviri ve cümle kurma egzersizleri
+- Ders sonucu ve ustalık yüzdesi
+- Tamamlanmış derslerde replay XP/günlük hedef koruması
+- Dinleme alıştırmaları ve gerçek ekrandaki seçeneklerle doğrulama
+- Kelime hafızası ve kayıtlı kelimeler
+- Dilbilgisi özeti
+- AI Speak: tarayıcı mikrofonu + konuşma metni + **0–100 yerel skor**
+- Kural tabanlı konuşma koçu
+- İsteğe bağlı OpenAI-compatible `/api/coach` AI Coach katmanı
+- Yanlış cevaplar için zamanlanmış tekrar: **10 dk → 1 → 3 → 7 → 14 → 30 gün**
+- Günlük mini görevler ve yerel tarih bazlı streak
+- Başarımlar ve profil
+- İlerlemeyi JSON olarak dışa/içe aktarma
+- LocalStorage ile cihaz içi kalıcı ilerleme
+- Responsive mobil/masaüstü arayüz
+- PWA manifest + offline Service Worker
+- Local premium entitlement altyapısı
+- Otomatik GitHub Actions QA
 
-## İçerik sistemi
+## İçerik mimarisi
 
-Speakio'nun A1 içerik kaynak dosyası **`content/a1-curriculum.json`** olarak eklendi. Dosya 12 üniteyi pedagojik bir şema ile tanımlar:
+A1 müfredatının tek kaynak dosyası **`content/a1-curriculum.json`**'dır. Her ünite:
 
 - öğrenme hedefi
 - kelime listesi
-- dil bilgisi konusu
-- hedef cümleler ve Türkçe anlamları
-- kısa diyalog
-- dinleme cümleleri
-- konuşma görevleri
-- çoktan seçmeli sorular
-- çeviri soruları
-- cümle kurma soruları
-- final tekrar ve mastery hedefi
+- grammar odağı
+- hedef cümleler + Türkçe anlamları
+- diyalog
+- listening cümleleri
+- speaking görevleri
+- 2 MCQ + 1 translation + 1 sentence-building egzersizi
 
 A1 üniteleri:
 
@@ -56,28 +54,46 @@ A1 üniteleri:
 11. Seyahat ve Otel
 12. Geçmiş Zaman ve Tekrar
 
-### Harici açık veri politikası
+## Teknik yapı
 
-Cümle veri kaynağı olarak **Tatoeba** seçildi. Tatoeba'nın indirme sayfasında genel cümle verileri **CC BY 2.0 FR**, uygun kayıtların bir bölümü ise **CC0 1.0** olarak yayımlanıyor. Bu nedenle Speakio'ya aktarılacak her harici cümle için kaynak kaydı, lisans ve gerekli atıf korunmalı; ses kayıtlarının lisansı ayrıca kontrol edilmelidir.
-
-Kaynak: https://tatoeba.org/tr/downloads
-API: https://api.tatoeba.org/
-
-**Not:** `a1-curriculum.json` içindeki pedagojik çekirdek içerik Speakio'nun uygulama içeriğidir. Tatoeba'dan ileride içeriğe aktarılacak kayıtlar, kaynak ID'si ve lisans bilgisiyle ayrı bir import katmanında tutulmalıdır.
+```text
+index.html                 UI ve responsive tasarım
+app.js                     uygulama akışı
+content/a1-curriculum.json A1 kaynak içerik
+content/content-loader.js  içerik yükleme katmanı
+runtime-fixes.js           öğrenme döngüsü ve veri hardening
+build-fix.js               sentence-building UI uyumluluğu
+premium.js                 entitlement katmanı
+api/coach.js               opsiyonel AI Coach endpoint'i
+sw.js                      offline/PWA cache
+qa.mjs                     içerik + syntax + PWA/API QA
+.github/workflows/qa.yml   otomatik CI
+```
 
 ## Çalıştırma
 
-Statik sürüm olduğu için `index.html` bir web sunucusunda veya GitHub Pages üzerinde doğrudan çalışabilir. Harici API anahtarı gerektirmeden temel öğrenme deneyimi çalışır.
+Node.js 20+ ile:
 
-## Sonraki ürün aşaması
+```bash
+npm run qa
+```
 
-- A1 içerik kaynağını uygulama ekranlarına tam bağlama
-- Tatoeba'dan lisans kontrollü cümle import katmanı
-- A2 → B1 → B2 → C1 kapsamlı müfredat
-- Supabase kullanıcı hesabı ve bulut senkronizasyonu
-- Sunucu tabanlı gerçek AI öğretmen
-- Telaffuz puanlama motoru
-- Spaced repetition kelime motoru
-- Daha gelişmiş sesli konuşma değerlendirmesi
-- Premium üyelik
-- Android/iOS paketleme
+Statik uygulama bir web sunucusunda veya Vercel/GitHub Pages benzeri statik hosting üzerinde çalışabilir. Temel öğrenme deneyimi için API anahtarı gerekmez.
+
+### Opsiyonel AI Coach
+
+`/api/coach` OpenAI-compatible bir endpoint'e bağlanabilir. Ortam değişkenleri:
+
+- `AI_API_URL`
+- `AI_API_KEY`
+- `AI_MODEL` (varsayılan: `gpt-4o-mini`)
+
+Bu değişkenler yoksa endpoint sessizce devre dışı kalır ve yerel konuşma koçu çalışmaya devam eder.
+
+## Harici içerik / lisans
+
+Tatoeba, yalnızca lisansı kayıt bazında doğrulanmış örnek cümleler için potansiyel dış kaynak olarak tanımlanmıştır. Üretim içeriğine aktarımda kaynak ID'si, dil, lisans ve atıf metadata'sı korunmalıdır. Ses kayıtlarının lisansı ayrıca doğrulanmalıdır. Ayrıntılı politika `content/attribution.md` dosyasındadır.
+
+## Durum
+
+**A1 çekirdek MVP tamamlandı.** Bundan sonraki ürün katmanları A2–C1 müfredat genişlemesi, gerçek hesap/senkronizasyon, gelişmiş telaffuz değerlendirmesi, gerçek ödeme/premium entegrasyonu ve mobil mağaza paketlemesidir. Bunlar mevcut ücretsiz A1 öğrenme döngüsünü bozmayacak şekilde katmanlanmalıdır.
