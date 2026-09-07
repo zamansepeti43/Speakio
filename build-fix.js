@@ -1,5 +1,6 @@
 (()=>{'use strict';
 const original=window.Speakio?.startLesson;
-if(!original)return;
-window.Speakio.startLesson=function(id){original(id);setTimeout(()=>{try{const units=typeof getSpeakioUnits==='function'?getSpeakioUnits():[],u=units.find(x=>Number(x.id)===Number(id)),z=u?.exercises?.[0];if(!u||!z||z.type!=='build')return;const box=document.querySelector('.lessonbox');if(!box)return;const parts=z.parts||z.words||String(z.answer||'').split(' ');const old=[...box.querySelectorAll('.answer')];if(!old.length)return;old.forEach((b,i)=>{if(parts[i])b.textContent=parts[i]});}catch(e){console.warn('Speakio build fix',e)}},30)};
+const patch=()=>{try{const box=document.querySelector('.lessonbox');if(!box)return;const pill=box.querySelector('.pill');if(!pill||pill.textContent.trim()!=='BUILD')return;const meta=document.querySelector('.lessonMeta span');const idx=Math.max(0,(parseInt(meta?.textContent||'1',10)||1)-1);const units=typeof getSpeakioUnits==='function'?getSpeakioUnits():[];const title=document.querySelector('header b')?.textContent?.trim();const u=units.find(x=>x.title===title);const z=u?.exercises?.[idx];if(!z)return;const parts=z.parts||z.words||String(z.answer||'').split(' ');const buttons=[...box.querySelectorAll('.answer')];parts.forEach((p,i)=>{if(buttons[i]){buttons[i].textContent=p;buttons[i].disabled=false;buttons[i].style.opacity='1'}})}catch(e){console.warn('Speakio build fix',e)}};
+if(original)window.Speakio.startLesson=function(id){original(id);setTimeout(patch,50)};
+new MutationObserver(()=>setTimeout(patch,0)).observe(document.body,{childList:true,subtree:true});
 })();
