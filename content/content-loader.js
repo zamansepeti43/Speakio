@@ -1,10 +1,11 @@
 /* Speakio curriculum runtime */
 window.SpeakioContent={course:null,ready:false,error:null};
 window.SpeakioSelectedLevel=(localStorage.getItem('speakio_level')||'A1').toUpperCase();
+const SPEAKIO_CURRICULUM_FILES={A1:'a1-curriculum.json',A2:'a2-curriculum.json',B1:'b1-curriculum.json',B2:'b2-curriculum.json',C1:'c1-curriculum.json'};
 window.SpeakioContentReady=(async()=>{
   try{
-    const level=['A1','A2','B1','B2','C1'].includes(window.SpeakioSelectedLevel)?window.SpeakioSelectedLevel:'A1';
-    const file=level.toLowerCase()+'-curriculum.json';
+    const level=Object.prototype.hasOwnProperty.call(SPEAKIO_CURRICULUM_FILES,window.SpeakioSelectedLevel)?window.SpeakioSelectedLevel:'A1';
+    const file=SPEAKIO_CURRICULUM_FILES[level];
     const res=await fetch('./content/'+file,{cache:'no-store'});
     if(!res.ok) throw new Error('Curriculum HTTP '+res.status);
     const data=await res.json();
