@@ -17,10 +17,11 @@ function progress(){return readProgress()}
 function migrate(){const s=readState(),p=progress();if(!p.__migrated){p[getLevel()]=cleanLearning(s);p.__migrated=true;write(PROGRESS,p)}return p}
 function completion(level){const p=migrate(),entry=p[level];const total=12;return entry?Math.round(Math.min(1,entry.completed.length/total)*100):0}
 function unlocked(level){const item=CATALOG.find(x=>x.id===level);if(!item)return false;if(!item.requires)return true;return completion(item.requires)>=100}
+function unitUnlocked(id){id=Number(id);if(!Number.isInteger(id)||id<1||id>12)return false;if(id===1)return true;const s=readState();const done=Array.isArray(s.completed)?s.completed.map(Number):[];return done.includes(id-1)}
 function switchLevel(level){level=String(level).toUpperCase();if(!LEVELS.includes(level)||level===getLevel())return;if(!unlocked(level)){toast('Önce '+level+' öncesindeki seviyeyi tamamla. 🔒');return}
  const s=readState(),p=migrate(),current=getLevel();p[current]=cleanLearning(s);const target=p[level]||cleanLearning({});write(PROGRESS,p);writeState(mergeLearning(s,target));localStorage.setItem(LEVEL,level);location.reload()}
 function toast(t){const e=document.querySelector('#toast');if(e){e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}}
-function patchUI(){const level=getLevel(),item=CATALOG.find(x=>x.id===level)||CATALOG[0],name=item.name;
+function patchUI(){const level=getLevel(),item=CATALOG.find(x=>x.id===level)||CATALOG[0];
  document.querySelectorAll('.courseHead b').forEach(e=>e.textContent='İngilizce '+level);
  document.querySelectorAll('.course-switcher .pill').forEach(e=>e.textContent=level);
  document.querySelectorAll('.course-switcher [data-level]').forEach(b=>{const l=b.dataset.level;b.disabled=!unlocked(l);b.classList.toggle('selected',l===level);if(!unlocked(l))b.setAttribute('title','Önceki seviyeyi tamamla')});
@@ -28,11 +29,13 @@ function patchUI(){const level=getLevel(),item=CATALOG.find(x=>x.id===level)||CA
  document.querySelectorAll('.card .row b').forEach(e=>{if(/Yolculuğun$/.test(e.textContent))e.textContent='🎯 '+level+' Yolculuğun';if(/ilerlemesi$/.test(e.textContent))e.textContent='📈 '+level+' ilerlemesi'});
  document.querySelectorAll('header b').forEach(e=>{if(/Kursu$/.test(e.textContent))e.textContent=level+' Kursu'});
  const desc=document.querySelector('.course-switcher p.muted');if(desc)desc.textContent=level+' seviyesindeki ilerlemen ayrı tutulur.';
+ document.querySelectorAll('.lesson[data-unit],button.lesson').forEach(el=>{const m=el.dataset.unit||el.getAttribute('data-id');if(!m)return;const ok=unitUnlocked(m);el.classList.toggle('locked',!ok);el.setAttribute('aria-disabled',String(!ok));if(!ok)el.title='Önceki bölümü tamamla 🔒')});
 }
 function inject(){const root=document.querySelector('main section');if(!root)return;let box=root.querySelector('.course-switcher');if(!box){box=document.createElement('div');box.className='card course-switcher';root.insertBefore(box,root.children[1]||null)}const level=getLevel();box.innerHTML='<div class="row"><div><b>🎓 Öğrenme seviyen</b><p class="muted">Seviyeni seç; ilerlemen seviyeye göre ayrı tutulur.</p></div><span class="pill">'+level+'</span></div><div class="level-tabs">'+CATALOG.map(x=>'<button class="secondary" data-level="'+x.id+'" '+(unlocked(x.id)?'':'disabled')+'>'+x.id+' · '+x.name+(unlocked(x.id)?'':' 🔒')+'</button>').join('')+'</div>';
  box.querySelectorAll('[data-level]').forEach(b=>b.onclick=()=>switchLevel(b.dataset.level));patchUI()}
-window.SpeakioCourse={level:getLevel,switch:switchLevel,progress:progress,catalog:()=>CATALOG.map(x=>({...x,unlocked:unlocked(x.id),completion:completion(x.id)})),isUnlocked:unlocked};
-function hook(){const api=window.Speakio;if(!api?.go)return;const old=api.go;api.go=function(v){old(v);setTimeout(()=>{inject();patchUI()},40)}}
-setTimeout(()=>{migrate();hook();inject()},180);window.addEventListener('speakio:content-ready',()=>setTimeout(()=>{inject();patchUI()},80));
+window.SpeakioCourse={level:getLevel,switch:switchLevel,progress:progress,catalog:()=>CATALOG.map(x=>({...x,unlocked:unlocked(x.id),completion:completion(x.id)})),isUnlocked:unlocked,isUnitUnlocked:unitUnlocked};
+function hook(){const api=window.Speakio;if(!api?.go)return;const old=api.go;api.go=function(v){old(v);setTimeout(()=>{inject();patchUI()},40)};
+ const start=api.startLesson;if(start){api.startLesson=function(id){if(!unitUnlocked(id)){toast('🔒 Önceki bölümü tamamla.');return false}return start(id)}}}
+setTimeout(()=>{migrate();hook();inject()},180);window.addEventListener('speakio:content-ready',()=>setTimeout(()=>{inject();patchUI();hook()},80));
 new MutationObserver(()=>patchUI()).observe(document.documentElement,{childList:true,subtree:true});
 })();
