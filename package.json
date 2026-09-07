@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "npx --yes serve . -l 3000",
+    "start": "npx --yes serve . -l 3000",
     "qa": "node qa.mjs",
     "syntax": "node qa.mjs --syntax-only"
   }
