@@ -33,7 +33,7 @@ function expandExercises(unit){
   }
   return unit;
 }
-window.SpeakioContentReady=(async()=>{
+async function loadCurriculum(){
   try{
     const level=Object.prototype.hasOwnProperty.call(SPEAKIO_CURRICULUM_FILES,window.SpeakioSelectedLevel)?window.SpeakioSelectedLevel:'A1';
     const file=SPEAKIO_CURRICULUM_FILES[level];
@@ -52,6 +52,14 @@ window.SpeakioContentReady=(async()=>{
     window.dispatchEvent(new CustomEvent('speakio:content-error',{detail:String(err)}));
     return null;
   }
+}
+window.SpeakioContentReady = (() => {
+  if (document.readyState === 'loading') {
+    return new Promise((resolve) => {
+      document.addEventListener('DOMContentLoaded', () => resolve(loadCurriculum()), { once: true });
+    });
+  }
+  return loadCurriculum();
 })();
 window.getSpeakioUnit=id=>window.SpeakioContent.course?.units?.find(u=>Number(u.id)===Number(id))||null;
 window.getSpeakioUnits=()=>window.SpeakioContent.course?.units||[];

@@ -1,4 +1,4 @@
-const CACHE='speakio-v16';
+const CACHE='speakio-v17';
 const CORE=['./','./index.html','./app.js','./runtime-fixes.js?v=4','./build-fix.js?v=3','./course-system.js?v=2','./premium.js','./premium-ui.js','./manifest.json','./content/content-loader.js','./content/a1-curriculum.json','./content/a2-curriculum.json','./content/b1-curriculum.json','./content/b2-curriculum.json','./content/c1-curriculum.json'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
