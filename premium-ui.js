@@ -1,0 +1,6 @@
+(()=>{'use strict';
+const KEY='speakio_premium_v1';
+const get=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{"active":false,"plan":"free"}')}catch{return {active:false,plan:'free'}}};
+function card(){const root=document.querySelector('main section');if(!root||root.querySelector('.premium-card'))return;const p=get();const box=document.createElement('div');box.className='card premium-card';box.innerHTML=`<div class="row"><b>✨ Speakio Premium</b><span class="pill">${p.active?'PRO':'FREE'}</span></div><p class="muted">Kişiselleştirilmiş koç, gelişmiş tekrarlar ve premium çalışma araçları.</p><div class="premium-features"><span>🤖 AI Coach</span><span>🧠 Akıllı tekrar+</span><span>📊 Gelişmiş analiz</span></div><button class="primary full" id="premiumAction">${p.active?'Premium aktif':'Premium’u keşfet'}</button>`;root.appendChild(box);box.querySelector('#premiumAction').onclick=()=>{if(p.active){alert('Speakio Premium aktif.')}else{if(confirm('Demo Premium’u bu cihazda etkinleştirelim mi?')){localStorage.setItem(KEY,JSON.stringify({active:true,plan:'pro'}));location.reload()}}};}
+const oldGo=window.Speakio&&window.Speakio.go;if(oldGo){window.Speakio.go=function(v){oldGo(v);setTimeout(()=>{if(v==='profile'||v==='settings')card()},0)}}else window.addEventListener('load',()=>setTimeout(card,0));
+})();
