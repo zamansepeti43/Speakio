@@ -5,7 +5,7 @@ window.SpeakioContentReady=(async()=>{
     const res=await fetch('./content/a1-curriculum.json',{cache:'no-store'});
     if(!res.ok) throw new Error('Curriculum HTTP '+res.status);
     const data=await res.json();
-    if(!data?.course||!Array.isArray(data?.units)) throw new Error('Invalid curriculum schema');
+    if(!data?.course||!Array.isArray(data?.units)||!data.units.length) throw new Error('Invalid curriculum schema');
     window.SpeakioContent.course=data;
     window.SpeakioContent.ready=true;
     window.dispatchEvent(new CustomEvent('speakio:content-ready',{detail:data}));
@@ -23,4 +23,4 @@ window.getSpeakioListening=()=>window.getSpeakioUnits().flatMap(u=>(u.listening|
 window.getSpeakioSpeaking=()=>window.getSpeakioUnits().flatMap(u=>(u.speaking||[]).map(prompt=>({unitId:u.id,unit:u.title,prompt})));
 window.getSpeakioExercises=id=>window.getSpeakioUnit(id)?.exercises||[];
 window.getSpeakioDialogue=id=>window.getSpeakioUnit(id)?.dialogue||[];
-setTimeout(()=>{const s=document.createElement('script');s.src='./runtime-fixes.js?v=1';s.defer=true;document.head.appendChild(s)},0);
+setTimeout(()=>{['runtime-fixes.js?v=2','build-fix.js?v=2'].forEach(src=>{const s=document.createElement('script');s.src=src;s.defer=true;document.head.appendChild(s)})},0);
