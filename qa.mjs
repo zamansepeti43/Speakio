@@ -1,15 +1,18 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 
 const syntaxOnly = process.argv.includes('--syntax-only');
 const required = ['index.html','app.js','runtime-fixes.js','build-fix.js','premium.js','sw.js','content/content-loader.js','content/a1-curriculum.json','api/coach.js'];
 for (const file of required) assert.ok(fs.existsSync(file), `missing ${file}`);
 
-for (const file of ['app.js','runtime-fixes.js','build-fix.js','premium.js','sw.js','content/content-loader.js','api/coach.js']) {
+for (const file of ['app.js','runtime-fixes.js','build-fix.js','premium.js','sw.js','content/content-loader.js']) {
   const source = fs.readFileSync(file, 'utf8');
   assert.ok(source.trim().length > 0, `empty ${file}`);
   try { new Function(source); } catch (error) { throw new Error(`${file}: syntax error — ${error.message}`); }
 }
+const moduleCheck = spawnSync(process.execPath, ['--check', 'api/coach.js'], { encoding: 'utf8' });
+assert.equal(moduleCheck.status, 0, `api/coach.js: syntax error — ${moduleCheck.stderr}`);
 
 if (syntaxOnly) {
   console.log('Speakio syntax QA OK.');
