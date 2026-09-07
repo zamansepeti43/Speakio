@@ -1,0 +1,11 @@
+{
+  "name": "Speakio — Konuşarak Dil Öğren",
+  "short_name": "Speakio",
+  "description": "Konuşarak dil öğrenme uygulaması",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#030911",
+  "theme_color": "#06111c",
+  "lang": "tr",
+  "icons": []
+}
