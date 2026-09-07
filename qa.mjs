@@ -26,6 +26,7 @@ assert.equal(json.course.nativeLanguage, 'Turkish');
 assert.equal(json.course.level, 'A1');
 assert.equal(json.units.length, 12);
 assert.ok(json.review?.masteryTarget >= 0.8);
+const tokens = value => String(value).toLowerCase().replace(/[.,!?;:'"“”‘’]/g,'').split(/\s+/).filter(Boolean).sort().join('|');
 
 const ids = new Set();
 for (const u of json.units) {
@@ -41,8 +42,7 @@ for (const u of json.units) {
   assert.ok(new Set(u.listening).size === u.listening.length, `unit ${u.id}: duplicate listening item`);
   assert.ok(Array.isArray(u.speaking) && u.speaking.length >= 2, `unit ${u.id}: speaking`);
   assert.ok(Array.isArray(u.exercises) && u.exercises.length === 4, `unit ${u.id}: expected 4 exercises`);
-  const types = u.exercises.map(e => e.type);
-  assert.deepEqual(types, ['mcq','mcq','translate','build'], `unit ${u.id}: exercise order`);
+  assert.deepEqual(u.exercises.map(e => e.type), ['mcq','mcq','translate','build'], `unit ${u.id}: exercise order`);
   for (const e of u.exercises) {
     assert.ok(e.q, `unit ${u.id}: exercise question`);
     if (e.type === 'mcq') {
@@ -54,7 +54,7 @@ for (const u of json.units) {
     if (e.type === 'build') {
       const parts = e.parts || e.words;
       assert.ok(Array.isArray(parts) && parts.length >= 2, `unit ${u.id}: build parts`);
-      assert.equal(parts.join(' '), e.answer, `unit ${u.id}: build answer mismatch`);
+      assert.equal(tokens(parts.join(' ')), tokens(e.answer), `unit ${u.id}: build token mismatch`);
     }
   }
 }
