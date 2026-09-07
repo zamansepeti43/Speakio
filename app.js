@@ -4,6 +4,7 @@ const KEY='speakio_state_v3';
 const defaults={name:'Öğrenci',xp:0,streak:0,goal:3,completed:[],savedWords:[],knownWords:[],sound:true,auto:true,week:[0,0,0,0,0,0,0],listeningDone:0,conversations:0,mistakes:[],review:{},daily:{date:'',done:0,listening:0,speaking:0},lastStudyDate:'',voiceStats:{attempts:0,average:0}};
 let S=(()=>{try{return {...defaults,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch{return {...defaults}}})();
 let C=null,view='home',lid=1,qi=0,score=0,build=[],listenItem=null,wordIndex=0;
+let lessonState={currentQueue:[],repeatQueue:[],repeatMode:false,missedQueue:[],missedSet:new Set(),replay:false};
 const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
 const U=()=>C?.units||[], unit=id=>U().find(x=>+x.id===+id), today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 const norm=x=>String(x??'').toLowerCase().trim().replace(/[.,!?;:'"“”‘’]/g,'').replace(/\s+/g,' ');
@@ -16,16 +17,83 @@ function stats(){return `<div class="stats"><div><strong>🔥 ${Number(S.streak|
 function lessonCard(x){if(!x)return '';const done=S.completed.includes(+x.id);return `<button class="lesson" onclick="Speakio.startLesson(${x.id})"><span class="node ${done?'done':''}">${done?'✓':'▶'}</span><span><b>${esc(x.title)}</b><small>${esc(x.goal||'Günlük iletişim pratiği')}</small></span><em>${done?'Tekrar':'Başla'}</em></button>`}
 function home(){daily();const total=U().length,done=S.completed.length,p=total?Math.round(done/total*100):0,cur=U().find(x=>!S.completed.includes(+x.id))||U()[0];return `<section><div class="hero"><div><small>Tekrar hoş geldin</small><h1>${esc(S.name)} 👋</h1><p>Bugün İngilizce konuşmaya hazır mısın?</p></div><div class="avatar">${esc((S.name||'S')[0].toUpperCase())}</div></div>${stats()}<div class="card"><div class="row"><b>🎯 A1 Yolculuğun</b><span>${done}/${total}</span></div><div class="progress"><i style="width:${p}%"></i></div><small>${p}% tamamlandı • Bugün ${S.daily.done}/${S.goal} hedef</small></div><div class="section"><b>Bugünün dersi</b><button onclick="Speakio.go('lessons')">Tümünü gör ›</button></div>${lessonCard(cur)}<div class="section"><b>Hızlı pratik</b></div><div class="grid"><button class="tile" onclick="Speakio.go('speak')">🎙️<b>AI Speak</b><small>Konuşma pratiği</small></button><button class="tile" onclick="Speakio.go('review')">🧠<b>Tekrar</b><small>${S.mistakes.length} zayıf soru</small></button><button class="tile" onclick="Speakio.go('listen')">🎧<b>Dinleme</b><small>${S.listeningDone} tamamlandı</small></button><button class="tile" onclick="Speakio.go('words')">📚<b>Kelimeler</b><small>${S.savedWords.length} kayıtlı</small></button></div><button class="secondary full" onclick="Speakio.go('analytics')">📊 Öğrenme istatistiklerim</button></section>`}
 function lessons(){return `<section>${top('A1 Kursu')}<div class="courseHead"><b>İngilizce A1</b><span>${S.completed.length}/${U().length}</span></div><p class="muted">Kelime → dilbilgisi → cümle → dinleme → konuşma.</p><div class="map">${U().map((x,i)=>`<div class="maprow"><span class="node ${S.completed.includes(+x.id)?'done':''}">${S.completed.includes(+x.id)?'✓':i+1}</span><div>${lessonCard(x)}</div></div>`).join('')}</div></section>`}
-function startLesson(id){lid=+id;qi=0;score=0;build=[];go('lesson')}
-function ex(){const a=unit(lid)?.exercises||[];return a[qi%Math.max(1,a.length)]}
-function lesson(){const x=unit(lid),z=ex();if(!x||!z)return lessons();const t=z.type||'mcq';let body='';if(t==='mcq')body=(z.options||[]).map((o,i)=>`<button class="answer" onclick="Speakio.answer(${i})">${esc(o)}</button>`).join('');else if(t==='translate')body=`<input id="answer" class="input" placeholder="İngilizce yaz..." autocomplete="off" aria-label="İngilizce cevap"><button class="primary full" onclick="Speakio.checkText()">Kontrol et</button>`;else if(t==='build'){const ws=z.parts||z.words||String(z.answer||'').split(' ');body=`<div class="hint">${build.length?esc(build.join(' ')):'Kelimeleri doğru sıraya koy.'}</div>${ws.map((w,i)=>`<button class="answer" onclick="Speakio.addWord(${i})">${esc(w)}</button>`).join('')}<button class="primary full" onclick="Speakio.checkBuild()">Cevabı kontrol et</button>`;}else body=`<div class="phrase">${esc(z.prompt||z.question||'')}</div><button class="primary full" onclick="Speakio.next(true)">Devam</button>`;return `<section>${top(x.title,'lessons')}<div class="lessonMeta"><span>${qi+1}/${x.exercises.length}</span><span>${score} doğru</span></div><div class="progress"><i style="width:${Math.round(qi/x.exercises.length*100)}%"></i></div><div class="lessonbox"><span class="pill">${esc(t.toUpperCase())}</span><h2>${esc(z.q||z.question||z.prompt||x.title)}</h2>${body}</div><div class="hint">💡 ${esc(x.grammar||'Cümleyi yüksek sesle tekrar et.')}</div></section>`}
-function finish(ok,z){if(ok)score++;else{S.mistakes.push({unitId:lid,question:z.q||z.question||z.prompt||'',answer:Array.isArray(z.options)&&typeof z.answer==='number'?z.options[z.answer]:z.answer||''});S.mistakes=S.mistakes.slice(-30);save()}toast(ok?'Doğru! 🎉':'Tekrar edeceğiz 💪');setTimeout(()=>next(),350)}
-function answer(i){const z=ex();finish(norm(z.options?.[i])===norm(z.options?.[z.answer]),z)}
-function checkText(){const z=ex(),v=$('#answer')?.value||'',a=Array.isArray(z.answers)?z.answers:[z.answer];finish(a.some(x=>norm(x)===norm(v)),z)}
+function go(target){view=target;render();scrollTo(0,0);}
+
+function startLesson(id){
+  const unitId=+id; const current=unit(unitId);
+  if(!current) return;
+  lid=unitId; qi=0; score=0; build=[];
+  lessonState={currentQueue: current.exercises.map((_,i)=>i), repeatQueue:[], repeatMode:false, missedQueue:[], missedSet:new Set(), replay:S.completed.includes(unitId)};
+  if(lessonState.replay) toast('🔁 Bu ders tekrar modunda. XP ve günlük hedef yeniden sayılmaz.');
+  go('lesson');
+}
+function currentQueue(){return lessonState.repeatMode ? lessonState.repeatQueue : lessonState.currentQueue;}
+function ex(){const q=currentQueue(); if(!q.length) return null; const index=Math.min(qi, q.length-1); return unit(lid)?.exercises?.[q[index]]||null;}
+function completeLesson(){
+  if(!lessonState.replay && !S.completed.includes(lid)){
+    S.completed.push(lid);
+    S.daily.done = Number(S.daily.done||0)+1;
+    save();
+    addXP(25);
+  }
+  view='result'; render();
+}
+function startRepeat(){
+  if(!lessonState.missedQueue.length) return false;
+  lessonState.repeatMode=true;
+  lessonState.repeatQueue=[...lessonState.missedQueue];
+  lessonState.missedQueue=[];
+  lessonState.missedSet=new Set();
+  qi=0; toast('🔁 Tekrar turu başladı.'); render(); return true;
+}
+function lesson(){
+  const x=unit(lid), z=ex();
+  if(!x||!z) return lessons();
+  const t=z.type||'mcq'; let body='';
+  if(t==='mcq') body=(z.options||[]).map((o,i)=>`<button class="answer" onclick="Speakio.answer(${i})">${esc(o)}</button>`).join('');
+  else if(t==='translate') body=`<input id="answer" class="input" placeholder="İngilizce yaz..." autocomplete="off" aria-label="İngilizce cevap"><button class="primary full" onclick="Speakio.checkText()">Kontrol et</button>`;
+  else if(t==='build'){const ws=z.parts||z.words||String(z.answer||'').split(' '); body=`<div class="hint">${build.length?esc(build.join(' ')):'Kelimeleri doğru sıraya koy.'}</div>${ws.map((w,i)=>`<button class="answer" onclick="Speakio.addWord(${i})">${esc(w)}</button>`).join('')}<button class="primary full" onclick="Speakio.checkBuild()">Cevabı kontrol et</button>`;}
+  else body=`<div class="phrase">${esc(z.prompt||z.question||'')}</div><button class="primary full" onclick="Speakio.next(true)">Devam</button>`;
+  const total=x.exercises.length;
+  return `<section>${top(x.title,'lessons')}<div class="lessonMeta"><span>${Math.min(qi+1,total)}/${total}</span><span>${score} doğru</span></div><div class="progress"><i style="width:${Math.round(((qi+1)/Math.max(1,total))*100)}%"></i></div><div class="lessonbox"><span class="pill">${esc(t.toUpperCase())}</span><h2>${esc(z.q||z.question||z.prompt||x.title)}</h2>${body}</div><div class="hint">💡 ${esc(x.grammar||'Cümleyi yüksek sesle tekrar et.')}${lessonState.repeatMode?'<br><small>🔁 Tekrar turu: yanlış yapılan sorular tekrar geliyor.</small>':''}</div></section>`;
+}
+function finishQuestion(correct,z){
+  const activeIndex=(unit(lid)?.exercises||[]).indexOf(z);
+  const queue=currentQueue();
+  if(correct){
+    score += 1;
+    if(lessonState.repeatMode){
+      lessonState.repeatQueue = lessonState.repeatQueue.filter(i => i !== activeIndex);
+      if(!lessonState.repeatQueue.length){ completeLesson(); return; }
+    } else {
+      lessonState.currentQueue = lessonState.currentQueue.filter(i => i !== activeIndex);
+      if(!lessonState.currentQueue.length){
+        if(lessonState.missedQueue.length) { startRepeat(); return; }
+        completeLesson(); return;
+      }
+    }
+    toast('Doğru! 🎉');
+  } else {
+    const answerText = Array.isArray(z.options)&&typeof z.answer==='number'?z.options[z.answer]:z.answer||'';
+    if(lessonState.repeatMode){
+      toast('💡 Öğrenme anı\nDoğru cevap: ' + answerText);
+      render();
+      return;
+    }
+    lessonState.currentQueue = lessonState.currentQueue.filter(i => i !== activeIndex);
+    if(!lessonState.missedSet.has(activeIndex)){ lessonState.missedSet.add(activeIndex); lessonState.missedQueue.push(activeIndex); }
+    toast('💡 Öğrenme anı\nDoğru cevap: ' + answerText);
+    if(!lessonState.currentQueue.length && lessonState.missedQueue.length){ startRepeat(); return; }
+  }
+  qi=0; build=[]; render();
+}
+function answer(i){const z=ex();if(!z) return;const correct=norm(z.options?.[i])===norm(z.options?.[z.answer]);finishQuestion(correct,z)}
+function checkText(){const z=ex();if(!z) return;const v=$('#answer')?.value||'',a=Array.isArray(z.answers)?z.answers:[z.answer];finishQuestion(a.some(x=>norm(x)===norm(v)),z)}
 function addWord(i){const z=ex(),parts=z.parts||z.words||String(z.answer||'').split(' '),w=parts[i];if(w!==undefined)build.push(w);render()}
-function checkBuild(){const z=ex();finish(norm(build.join(' '))===norm(z.answer),z);build=[]}
-function next(){qi++;if(qi>=(unit(lid)?.exercises?.length||1)){if(!S.completed.includes(lid))S.completed.push(lid);daily();S.daily.done++;save();addXP(25);view='result';render()}else{build=[];render()}}
-function result(){const total=unit(lid)?.exercises?.length||0,p=total?Math.round(score/total*100):0;return `<section>${top('Ders tamamlandı','lessons')}<div class="resultHero">🎉<h1>Harika iş!</h1><p>${esc(unit(lid)?.title)}</p></div>${stats()}<div class="card"><b>${score}/${total} doğru</b><div class="progress"><i style="width:${p}%"></i></div><p class="muted">${p>=90?'Mükemmel hakimiyet.':p>=70?'Çok iyi. Birkaç noktayı daha pekiştirelim.':'Tekrarla birlikte hızla güçlenecek.'}</p></div><button class="primary full" onclick="Speakio.go('lessons')">Kursa devam et</button><button class="secondary full" onclick="Speakio.startLesson(${lid})">Tekrar çöz</button></section>`}
+function checkBuild(){const z=ex();if(!z) return;finishQuestion(norm(build.join(' '))===norm(z.answer),z);build=[]}
+function next(){const q=currentQueue(); if(!q.length) return; qi=0; render();}
+function result(){const total=unit(lid)?.exercises?.length||0,p=total?Math.round(score/total*100):0;const replayNote=lessonState.replay?'<p class="muted">🔁 Bu ders tekrar modunda. XP ve günlük hedef yeniden sayılmaz.</p>':'';return `<section>${top('Ders tamamlandı','lessons')}<div class="resultHero">🎉<h1>Harika iş!</h1><p>${esc(unit(lid)?.title)}</p></div>${stats()}<div class="card"><b>${score}/${total} doğru</b><div class="progress"><i style="width:${p}%"></i></div>${replayNote}<p class="muted">${p>=90?'Mükemmel hakimiyet.':p>=70?'Çok iyi. Birkaç noktayı daha pekiştirelim.':'Tekrarla birlikte hızla güçlenecek.'}</p></div><button class="primary full" onclick="Speakio.go('lessons')">Kursa devam et</button><button class="secondary full" onclick="Speakio.startLesson(${lid})">Tekrar çöz</button></section>`}
+
 function review(){const now=Date.now(),m=(S.mistakes||[]).filter(x=>!x.dueAt||Date.parse(x.dueAt)<=now).slice(-8).reverse();return `<section>${top('Akıllı Tekrar')}<div class="card"><b>🧠 Zayıf noktaların</b><p class="muted">Şimdi zamanı gelen sorular öne çıkarılır.</p></div>${m.length?m.map(x=>`<button class="lesson" onclick="Speakio.startLesson(${x.unitId})"><span class="node">↻</span><span><b>${esc(x.question||'Tekrar sorusu')}</b><small>Doğru cevap: ${esc(x.answer)}</small></span><em>Tekrar</em></button>`).join(''):`<div class="empty">Şimdilik zamanı gelen zayıf soru yok. 🎉</div>`}<button class="primary full" onclick="Speakio.go('lessons')">Derslere dön</button></section>`}
 function words(){const a=typeof getSpeakioVocabulary==='function'?getSpeakioVocabulary():[];if(!a.length)return `<section>${top('Kelimeler')}<div class="empty">İçerik yükleniyor…</div></section>`;const v=a[wordIndex%a.length];return `<section>${top('Kelimeler')}<div class="word"><div class="wordemoji">🗣️</div><h2>${esc(v.en)}</h2><span class="pron">A1 • ${esc(v.unit)}</span><p>${esc(v.tr)}</p><button class="audio" aria-label="Kelimeyi dinle" onclick="Speakio.say('${esc(v.en)}')">🔊</button></div><div class="wordactions"><button aria-label="Kelimeyi kaydet" onclick="Speakio.saveWord('${esc(v.en)}')">🔖</button><button aria-label="Sonraki kelime" onclick="Speakio.nextWord()">→</button></div><div class="card"><b>Örnek</b><p class="muted">${esc(unit(v.unitId)?.sentences?.[0]?.[0]||'')}</p></div></section>`}
 function listen(){const a=typeof getSpeakioListening==='function'?getSpeakioListening():[];if(!a.length)return `<section>${top('Dinleme')}<div class="empty">İçerik yükleniyor…</div></section>`;listenItem=listenItem||a[Math.floor(Math.random()*a.length)];const opts=[listenItem.text,...a.filter(x=>x.text!==listenItem.text).sort(()=>Math.random()-.5).slice(0,3).map(x=>x.text)].sort(()=>Math.random()-.5);return `<section>${top('Dinleme')}<div class="listen"><span class="pill">${esc(listenItem.unit)}</span><h2>Ne duydun?</h2><button class="audio" aria-label="Cümleyi dinle" onclick="Speakio.say('${esc(listenItem.text)}')">🔊</button>${opts.map((o,i)=>`<button class="choice" onclick="Speakio.listenAnswer(${i})">${esc(o)}</button>`).join('')}</div></section>`}
@@ -37,9 +105,9 @@ function grammar(){return `<section>${top('Dilbilgisi')}<div class="card"><span 
 function profile(){return `<section>${top('Profil')}<div class="profilehead"><div class="bigavatar">${esc((S.name||'S')[0].toUpperCase())}</div><div><h2>${esc(S.name)}</h2><span class="level">A1 • ${S.xp} XP</span></div></div>${stats()}<div class="profileline" onclick="Speakio.go('analytics')"><b>📊 Öğrenme istatistikleri</b><span>›</span></div><div class="profileline" onclick="Speakio.go('achievements')"><b>🏆 Başarımlar</b><span>›</span></div><div class="profileline" onclick="Speakio.go('grammar')"><b>🧩 Dilbilgisi</b><span>›</span></div><div class="profileline" onclick="Speakio.go('settings')"><b>⚙️ Ayarlar</b><span>›</span></div></section>`}
 function achievements(){const a=[['🔥','7 Gün Serisi',S.streak>=7],['⚡','1000 XP',S.xp>=1000],['📚','İlk Ders',S.completed.length>=1],['🎧','Dinleyici',S.listeningDone>=3],['🗣️','Konuşmacı',S.conversations>=5],['🏆','A1 Ustası',S.completed.length>=U().length]];return `<section>${top('Başarımlar')}<div class="achgrid">${a.map(x=>`<div class="achievement ${x[2]?'':'locked'}"><span>${x[0]}</span><b>${x[1]}</b><small>${x[2]?'Kazanıldı':'Kilitli'}</small></div>`).join('')}</div></section>`}
 function settings(){return `<section>${top('Ayarlar')}<div class="setting"><b>Ses efektleri</b><button class="toggle ${S.sound?'on':''}" aria-label="Ses efektlerini değiştir" onclick="Speakio.toggle('sound')"></button></div><div class="setting"><b>Otomatik ses</b><button class="toggle ${S.auto?'on':''}" aria-label="Otomatik sesi değiştir" onclick="Speakio.toggle('auto')"></button></div><div class="card"><b>Profil adı</b><input class="input" value="${esc(S.name)}" onchange="Speakio.rename(this.value)" aria-label="Profil adı"></div><button class="danger full" onclick="Speakio.reset()">İlerlemeyi sıfırla</button></section>`}
-function render(){daily();const h={home,lessons,lesson,result,review,words,listen,speak,grammar,profile,achievements,settings,analytics}[view]||home;$('#app').innerHTML=`<main>${h()}</main>${['home','lessons','speak','profile'].includes(view)?nav():''}<div id="toast" class="toast" role="status" aria-live="polite"></div>`}
+function render(){daily();const h={home,lessons,lesson,result,review,words,listen,speak,grammar,profile,achievements,settings,analytics}[view]||home;const root=$('#app');if(!root)return;root.innerHTML=`<main>${h()}</main>${['home','lessons','speak','profile'].includes(view)?nav():''}<div id="toast" class="toast" role="status" aria-live="polite"></div>`}
 function say(t){if(!window.speechSynthesis)return;const x=new SpeechSynthesisUtterance(t);x.lang='en-US';speechSynthesis.cancel();speechSynthesis.speak(x)}
-function boot(){daily();C=window.SpeakioContent?.course||null;if(!C)window.addEventListener('speakio:content-ready',e=>{C=e.detail;render()},{once:true});render()}
-window.Speakio={go:x=>{view=x;render();scrollTo(0,0)},startLesson,answer,checkText,addWord,checkBuild,next,saveWord:w=>{if(!S.savedWords.includes(w))S.savedWords.push(w);save();toast('Kelime kaydedildi 🔖')},nextWord:()=>{wordIndex++;render()},say,listenAnswer,listenSpeech,toggle:k=>{S[k]=!S[k];save();render()},rename:v=>{S.name=String(v||'Öğrenci').slice(0,40);save();render()},reset:()=>{if(confirm('Tüm ilerleme silinsin mi?')){localStorage.removeItem(KEY);location.reload()}}};
+function boot(){daily();C=window.SpeakioContent?.course||null;const onReady=e=>{C=e.detail||window.SpeakioContent?.course||null;render()};const onError=()=>{const root=$('#app');if(root)root.innerHTML='<main><section><div class="card"><b>İçerik yüklenemedi</b><p class="muted">Kurs verisi hazır değil. Lütfen sayfayı yenileyin veya internet bağlantısını kontrol edin.</p></div></section></main>'};if(!C){window.addEventListener('speakio:content-ready',onReady,{once:true});window.addEventListener('speakio:content-error',onError,{once:true});}render();if(!C){setTimeout(()=>{C=window.SpeakioContent?.course||null;if(C){render();}},50)}}
+window.Speakio={go,startLesson,answer,checkText,addWord,checkBuild,next,saveWord:w=>{if(!S.savedWords.includes(w))S.savedWords.push(w);save();toast('Kelime kaydedildi 🔖')},nextWord:()=>{wordIndex++;render()},say,listenAnswer,listenSpeech,toggle:k=>{S[k]=!S[k];save();render()},rename:v=>{S.name=String(v||'Öğrenci').slice(0,40);save();render()},reset:()=>{if(confirm('Tüm ilerleme silinsin mi?')){localStorage.removeItem(KEY);location.reload()}}};
 boot();
 })();
