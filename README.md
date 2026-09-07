@@ -1,24 +1,26 @@
 # Speakio 🗣️
 
-Speakio, **konuşarak dil öğrenme** üzerine kurulmuş mobil-first bir İngilizce öğrenme uygulamasıdır. Mevcut sürüm A1 çekirdek öğrenme döngüsünü çalışır halde sunar: ders → alıştırma → tekrar → dinleme → konuşma → ilerleme.
+Speakio, **konuşarak dil öğrenme** üzerine kurulmuş mobil-first bir İngilizce öğrenme uygulamasıdır. Öğrenme döngüsü: ders → alıştırma → hata öğretimi → tekrar → dinleme → konuşma → ilerleme.
 
 ## Mevcut sürüm
 
 - Ana sayfa, günlük hedef, XP ve streak
-- İngilizce A1 kurs haritası
-- **12 A1 ünite / 48 egzersiz**
+- A1 + A2 + B1 kurs katmanları
+- **12 ünite / seviye**
+- **Her ünite 10 etkin egzersiz**; kaynak JSON'da 4 çekirdek egzersiz, runtime loader bunları 10'a tamamlar
+- Şu an A1+A2+B1 için **360 etkin egzersiz**
 - Çoktan seçmeli, çeviri ve cümle kurma egzersizleri
-- Ders sonucu ve ustalık yüzdesi
+- Yanlış cevapta doğru cevabı hemen gösterip öğretme; ders sonunda yanlışları tekrar etme
 - Tamamlanmış derslerde replay XP/günlük hedef koruması
+- Ünite bazlı ilerleme kilidi ve A1→A2→B1→B2→C1 seviye kilidi
 - Dinleme alıştırmaları ve gerçek ekrandaki seçeneklerle doğrulama
 - Kelime hafızası ve kayıtlı kelimeler
 - Dilbilgisi özeti
 - AI Speak: tarayıcı mikrofonu + konuşma metni + **0–100 yerel skor**
-- Kural tabanlı konuşma koçu
-- İsteğe bağlı OpenAI-compatible `/api/coach` AI Coach katmanı
+- Kural tabanlı konuşma koçu + opsiyonel OpenAI-compatible AI Coach
 - Yanlış cevaplar için zamanlanmış tekrar: **10 dk → 1 → 3 → 7 → 14 → 30 gün**
 - Günlük mini görevler ve yerel tarih bazlı streak
-- Başarımlar ve profil
+- Başarımlar, profil ve analytics
 - İlerlemeyi JSON olarak dışa/içe aktarma
 - LocalStorage ile cihaz içi kalıcı ilerleme
 - Responsive mobil/masaüstü arayüz
@@ -26,10 +28,11 @@ Speakio, **konuşarak dil öğrenme** üzerine kurulmuş mobil-first bir İngili
 - Local premium entitlement altyapısı
 - Otomatik GitHub Actions QA
 
-## İçerik mimarisi
+## Müfredat mimarisi
 
-A1 müfredatının tek kaynak dosyası **`content/a1-curriculum.json`**'dır. Her ünite:
+Her seviye aynı içerik sözleşmesini kullanır:
 
+- 12 ünite
 - öğrenme hedefi
 - kelime listesi
 - grammar odağı
@@ -37,22 +40,23 @@ A1 müfredatının tek kaynak dosyası **`content/a1-curriculum.json`**'dır. He
 - diyalog
 - listening cümleleri
 - speaking görevleri
-- 2 MCQ + 1 translation + 1 sentence-building egzersizi
+- 4 çekirdek egzersiz + runtime'da 10 egzersiz hedefi
 
-A1 üniteleri:
+Mevcut kaynaklar:
 
-1. Selamlaşma ve Tanışma
-2. Kendini Tanıtma
-3. Sayılar, Saat ve Yaş
-4. Aile ve İnsanlar
-5. Yiyecek ve İçecek
-6. Ev ve Eşyalar
-7. Günlük Rutin
-8. İş ve Meslek
-9. Şehir ve Yönler
-10. Alışveriş
-11. Seyahat ve Otel
-12. Geçmiş Zaman ve Tekrar
+- `content/a1-curriculum.json`
+- `content/a2-curriculum.json`
+- `content/b1-curriculum.json`
+
+B2 ve C1 için kurs altyapısı hazır; içerik üretimi sıradaki müfredat adımıdır.
+
+## İlerleme sistemi
+
+- Ünite 1 başlangıçta açıktır.
+- Ünite N, Ünite N-1 tamamlanmadan başlatılamaz.
+- Tamamlanmış üniteler tekrar edilebilir; tekrar yapmak ilerleme kilidini geriye götürmez.
+- A2, A1 %100 tamamlanmadan; B1, A2 %100 tamamlanmadan; sonraki seviyeler de aynı zincirle açılır.
+- Her seviyenin ilerlemesi ayrı tutulur.
 
 ## Teknik yapı
 
@@ -60,7 +64,10 @@ A1 üniteleri:
 index.html                 UI ve responsive tasarım
 app.js                     uygulama akışı
 content/a1-curriculum.json A1 kaynak içerik
-content/content-loader.js  içerik yükleme katmanı
+content/a2-curriculum.json A2 kaynak içerik
+content/b1-curriculum.json B1 kaynak içerik
+content/content-loader.js  içerik yükleme + 10 egzersiz runtime genişletme
+course-system.js           seviye/ünite ilerleme ve kilit sistemi
 runtime-fixes.js           öğrenme döngüsü ve veri hardening
 build-fix.js               sentence-building UI uyumluluğu
 premium.js                 entitlement katmanı
@@ -78,7 +85,7 @@ Node.js 20+ ile:
 npm run qa
 ```
 
-Statik uygulama bir web sunucusunda veya Vercel/GitHub Pages benzeri statik hosting üzerinde çalışabilir. Temel öğrenme deneyimi için API anahtarı gerekmez.
+Temel öğrenme deneyimi için API anahtarı gerekmez. Uygulama statik hosting üzerinde çalışabilecek şekilde tasarlanmıştır.
 
 ### Opsiyonel AI Coach
 
@@ -86,14 +93,22 @@ Statik uygulama bir web sunucusunda veya Vercel/GitHub Pages benzeri statik host
 
 - `AI_API_URL`
 - `AI_API_KEY`
-- `AI_MODEL` (varsayılan: `gpt-4o-mini`)
+- `AI_MODEL`
 
-Bu değişkenler yoksa endpoint sessizce devre dışı kalır ve yerel konuşma koçu çalışmaya devam eder.
+Değişkenler yoksa yerel konuşma koçu çalışmaya devam eder.
 
-## Harici içerik / lisans
+## Ürün sırası
 
-Tatoeba, yalnızca lisansı kayıt bazında doğrulanmış örnek cümleler için potansiyel dış kaynak olarak tanımlanmıştır. Üretim içeriğine aktarımda kaynak ID'si, dil, lisans ve atıf metadata'sı korunmalıdır. Ses kayıtlarının lisansı ayrıca doğrulanmalıdır. Ayrıntılı politika `content/attribution.md` dosyasındadır.
+1. B1 içerik katmanı ✅
+2. B2 içerik katmanı
+3. C1 içerik katmanı
+4. Tekrar motorunun davranış QA'sı
+5. Konuşma değerlendirmesinin derinleştirilmesi
+6. Hesap + bulut senkronizasyonu
+7. Gerçek premium/ödeme altyapısı
+8. Offline/PWA ve erişilebilirlik son QA
+9. Android/iOS mağaza paketleme
 
 ## Durum
 
-**A1 çekirdek MVP tamamlandı.** Bundan sonraki ürün katmanları A2–C1 müfredat genişlemesi, gerçek hesap/senkronizasyon, gelişmiş telaffuz değerlendirmesi, gerçek ödeme/premium entegrasyonu ve mobil mağaza paketlemesidir. Bunlar mevcut ücretsiz A1 öğrenme döngüsünü bozmayacak şekilde katmanlanmalıdır.
+**A1, A2 ve B1 içerik katmanı hazır.** Kurs/ünite ilerleme kilitleri, 10 etkin egzersiz hedefi, replay koruması, SRS, PWA, yerel konuşma skoru, AI Coach sözleşmesi ve premium entitlement temeli projeye dahil edilmiştir. B2 ve C1 içerikleri ile üretim hesap/ödeme katmanı sonraki büyük bloklardır.
