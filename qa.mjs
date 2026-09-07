@@ -70,5 +70,8 @@ assert.equal(manifest.display, 'standalone');
 assert.ok(Array.isArray(manifest.icons) && manifest.icons.length > 0);
 const coach = fs.readFileSync('api/coach.js','utf8');
 assert.ok(coach.includes('AI_API_URL') && coach.includes('AI_API_KEY') && coach.includes('AI_MODEL'));
+const premium = fs.readFileSync('premium.js','utf8');
+assert.ok(premium.includes('speakio_premium_v2') && premium.includes('SpeakioPremium') && premium.includes('activateLocal'));
+assert.ok(premium.includes("state.active||!!FREE_LIMITS[feature]"), 'premium free-tier fallback missing');
 
-console.log(`Speakio QA OK — ${json.units.length} A1 units, ${json.units.reduce((n,u)=>n+u.exercises.length,0)} exercises, PWA assets and API contract validated.`);
+console.log(`Speakio QA OK — ${json.units.length} A1 units, ${json.units.reduce((n,u)=>n+u.exercises.length,0)} exercises, PWA, AI coach and premium entitlement contracts validated.`);
