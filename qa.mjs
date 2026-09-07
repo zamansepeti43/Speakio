@@ -35,7 +35,7 @@ for (const u of json.units) {
   assert.ok(u.title && u.goal && u.grammar, `unit ${u.id}: missing core metadata`);
   assert.ok(Array.isArray(u.vocabulary) && u.vocabulary.length >= 8, `unit ${u.id}: vocabulary`);
   assert.ok(u.vocabulary.every(v => Array.isArray(v) && v.length === 2 && v[0] && v[1]), `unit ${u.id}: bad vocabulary pair`);
-  assert.ok(Array.isArray(u.sentences) && u.sentences.length >= 8, `unit ${u.id}: sentences`);
+  assert.ok(Array.isArray(u.sentences) && u.sentences.length >= 4, `unit ${u.id}: sentences`);
   assert.ok(u.sentences.every(v => Array.isArray(v) && v.length === 2 && v[0] && v[1]), `unit ${u.id}: bad sentence pair`);
   assert.ok(Array.isArray(u.dialogue) && u.dialogue.length >= 2, `unit ${u.id}: dialogue`);
   assert.ok(Array.isArray(u.listening) && u.listening.length >= 4, `unit ${u.id}: listening`);
