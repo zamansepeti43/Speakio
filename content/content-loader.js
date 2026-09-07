@@ -1,10 +1,10 @@
 /* Speakio curriculum runtime */
 window.SpeakioContent={course:null,ready:false,error:null};
-window.SpeakioSelectedLevel=localStorage.getItem('speakio_level')||'A1';
+window.SpeakioSelectedLevel=(localStorage.getItem('speakio_level')||'A1').toUpperCase();
 window.SpeakioContentReady=(async()=>{
   try{
-    const level=String(window.SpeakioSelectedLevel).toUpperCase()==='A2'?'A2':'A1';
-    const file=level==='A2'?'a2-curriculum.json':'a1-curriculum.json';
+    const level=['A1','A2','B1','B2','C1'].includes(window.SpeakioSelectedLevel)?window.SpeakioSelectedLevel:'A1';
+    const file=level.toLowerCase()+'-curriculum.json';
     const res=await fetch('./content/'+file,{cache:'no-store'});
     if(!res.ok) throw new Error('Curriculum HTTP '+res.status);
     const data=await res.json();
@@ -27,4 +27,4 @@ window.getSpeakioListening=()=>window.getSpeakioUnits().flatMap(u=>(u.listening|
 window.getSpeakioSpeaking=()=>window.getSpeakioUnits().flatMap(u=>(u.speaking||[]).map(prompt=>({unitId:u.id,unit:u.title,prompt})));
 window.getSpeakioExercises=id=>window.getSpeakioUnit(id)?.exercises||[];
 window.getSpeakioDialogue=id=>window.getSpeakioUnit(id)?.dialogue||[];
-setTimeout(()=>{['runtime-fixes.js?v=3','build-fix.js?v=3','../course-system.js?v=1'].forEach(src=>{const s=document.createElement('script');s.src='./content/'+src;s.defer=true;document.head.appendChild(s)})},0);
+setTimeout(()=>{['runtime-fixes.js?v=4','build-fix.js?v=3','../course-system.js?v=2'].forEach(src=>{const s=document.createElement('script');s.src='./content/'+src;s.defer=true;document.head.appendChild(s)})},0);
