@@ -12,7 +12,7 @@ window.SpeakioContentReady=(async()=>{
     return data;
   }catch(err){
     window.SpeakioContent.error=String(err);
-    window.dispatchEvent(new CustomEvent('speakio:content-error',{detail:String(err}));
+    window.dispatchEvent(new CustomEvent('speakio:content-error',{detail:String(err)}));
     return null;
   }
 })();
@@ -23,5 +23,4 @@ window.getSpeakioListening=()=>window.getSpeakioUnits().flatMap(u=>(u.listening|
 window.getSpeakioSpeaking=()=>window.getSpeakioUnits().flatMap(u=>(u.speaking||[]).map(prompt=>({unitId:u.id,unit:u.title,prompt})));
 window.getSpeakioExercises=id=>window.getSpeakioUnit(id)?.exercises||[];
 window.getSpeakioDialogue=id=>window.getSpeakioUnit(id)?.dialogue||[];
-/* Load hardening after the main app script has initialized. */
 setTimeout(()=>{const s=document.createElement('script');s.src='./runtime-fixes.js?v=1';s.defer=true;document.head.appendChild(s)},0);
