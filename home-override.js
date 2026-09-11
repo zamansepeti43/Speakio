@@ -1,10 +1,13 @@
 (()=>{'use strict';
-const S=window.Speakio,H=window.SpeakioHome;
-if(!S||!H)return;
+const S=window.Speakio;
+if(!S)return;
 let route='home';
-const originalGo=S.go, originalRender=S.render;
+const originalGo=S.go,originalRender=S.render;
+function forceHome(){try{if(route==='home'&&window.SpeakioHome&&window.SpeakioHome.render){window.SpeakioHome.render();return true}}catch(e){console.warn('Speakio home override',e)}return false}
 S.go=function(target){route=target;return originalGo(target)};
-S.render=function(){if(route==='home'&&window.SpeakioHome?.render){return window.SpeakioHome.render()}return originalRender()};
-window.addEventListener('speakio:content-ready',()=>{if(route==='home')window.SpeakioHome?.render?.()});
-if(route==='home')H.render();
+S.render=function(){if(forceHome())return;return originalRender()};
+window.addEventListener('speakio:content-ready',function(){if(route==='home')forceHome()});
+setTimeout(forceHome,0);setTimeout(forceHome,100);setTimeout(forceHome,500);setTimeout(forceHome,1200);
+new MutationObserver(function(){if(route==='home'&&document.querySelector('#app .hero'))forceHome()}).observe(document.documentElement,{childList:true,subtree:true});
+forceHome();
 })();
