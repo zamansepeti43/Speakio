@@ -32,7 +32,7 @@ async function loadCurriculum(){
     window.SpeakioContent.course=data;window.SpeakioContent.ready=true;window.SpeakioContent.loading=false;window.SpeakioContent.level=level;
     window.SpeakioContentReady=Promise.resolve(data);
     window.dispatchEvent(new CustomEvent('speakio:content-ready',{detail:data}));
-    try{window.Speakio?.render?.()}catch(e){console.error('Speakio direct render',e)}
+    try{if(window.SpeakioHome?.render)window.SpeakioHome.render();else window.Speakio?.render?.()}catch(e){console.error('Speakio home render',e)}
     return data;
   }catch(err){window.SpeakioContent.loading=false;window.SpeakioContent.error=String(err);window.SpeakioContentReady=Promise.reject(err);window.SpeakioContentReady.catch(()=>{});window.dispatchEvent(new CustomEvent('speakio:content-error',{detail:String(err)}));throw err;}})();
   return curriculumPromise;
