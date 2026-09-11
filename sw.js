@@ -1,6 +1,15 @@
-const VERSION='19';
+const VERSION='20';
 const CACHE='speakio-v'+VERSION;
-const CORE=['./','./index.html','./app.js','./runtime-fixes.js?v=4','./build-fix.js?v=3','./course-system.js?v=2','./premium.js','./premium-ui.js','./manifest.json','./content/content-loader.js','./content/a1-curriculum.json','./content/a2-curriculum.json','./content/b1-curriculum.json','./content/b2-curriculum.json','./content/c1-curriculum.json'];
-self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(async c=>{await Promise.all(CORE.map(async url=>{try{const r=await fetch(url,{cache:'reload'});if(r.ok)await c.put(url,r.clone())}catch(_){}}));await self.skipWaiting()})));
-self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const isNav=e.request.mode==='navigate';if(isNav){e.respondWith(fetch(e.request,{cache:'no-store'}).then(res=>{if(res.ok)caches.open(CACHE).then(c=>c.put('./index.html',res.clone())).catch(()=>{});return res}).catch(()=>caches.match('./index.html')));return}e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{if(res.ok){const copy=res.clone();caches.open(CACHE).then(c=>c.put(e.request,copy)).catch(()=>{})}return res}).catch(()=>undefined)))})
+self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{
+  const keys=await caches.keys();
+  await Promise.all(keys.map(key=>caches.delete(key)));
+  await self.clients.claim();
+  await self.registration.unregister();
+  const clients=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+  clients.forEach(client=>client.postMessage({type:'SPEAKIO_SW_DISABLED'}));
+})()));
+self.addEventListener('fetch',event=>{
+  if(event.request.method!=='GET')return;
+  event.respondWith(fetch(event.request,{cache:'no-store'}));
+});
