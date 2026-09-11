@@ -18,7 +18,7 @@ function expandExercises(unit){
   return unit;
 }
 async function loadCurriculum(){try{const level=Object.prototype.hasOwnProperty.call(SPEAKIO_CURRICULUM_FILES,window.SpeakioSelectedLevel)?window.SpeakioSelectedLevel:'A1';const res=await fetch('./content/'+SPEAKIO_CURRICULUM_FILES[level],{cache:'no-store'});if(!res.ok)throw new Error('Curriculum HTTP '+res.status);const data=await res.json();if(!data?.course||!Array.isArray(data?.units)||!data.units.length)throw new Error('Invalid curriculum schema');data.units.forEach(expandExercises);window.SpeakioContent.course=data;window.SpeakioContent.ready=true;window.SpeakioContent.level=level;window.dispatchEvent(new CustomEvent('speakio:content-ready',{detail:data}));return data;}catch(err){window.SpeakioContent.error=String(err);window.dispatchEvent(new CustomEvent('speakio:content-error',{detail:String(err)}));return null;}}
-window.SpeakioContentReady=(()=>{if(document.readyState==='loading')return new Promise(resolve=>document.addEventListener('DOMContentLoaded',()=>resolve(loadCurriculum()),{once:true}));return loadCurriculum()})();
+window.SpeakioContentReady=loadCurriculum();
 window.getSpeakioUnit=id=>window.SpeakioContent.course?.units?.find(u=>Number(u.id)===Number(id))||null;
 window.getSpeakioUnits=()=>window.SpeakioContent.course?.units||[];
 window.getSpeakioVocabulary=()=>window.getSpeakioUnits().flatMap(u=>(u.vocabulary||[]).map(v=>({unitId:u.id,unit:u.title,en:v[0],tr:v[1]})));
