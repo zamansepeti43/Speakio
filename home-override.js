@@ -1,0 +1,10 @@
+(()=>{'use strict';
+const S=window.Speakio,H=window.SpeakioHome;
+if(!S||!H)return;
+let route='home';
+const originalGo=S.go, originalRender=S.render;
+S.go=function(target){route=target;return originalGo(target)};
+S.render=function(){if(route==='home'&&window.SpeakioHome?.render){return window.SpeakioHome.render()}return originalRender()};
+window.addEventListener('speakio:content-ready',()=>{if(route==='home')window.SpeakioHome?.render?.()});
+if(route==='home')H.render();
+})();
