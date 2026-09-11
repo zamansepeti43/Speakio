@@ -17,8 +17,15 @@ const recover=async()=>{
 };
 window.addEventListener('speakio:content-ready',()=>setTimeout(render,0));
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(recover,0),{once:true});else setTimeout(recover,0);
-if(!localStorage.getItem(KEY) && 'serviceWorker' in navigator){
-  localStorage.setItem(KEY,'1');
-  navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.update().catch(()=>{})))).catch(()=>{});
+if('serviceWorker' in navigator){
+  let wasControlled=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(wasControlled){location.reload();return}
+    wasControlled=true;
+  });
+  if(!localStorage.getItem(KEY)){
+    localStorage.setItem(KEY,'1');
+    navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.update().catch(()=>{})))).catch(()=>{});
+  }
 }
 })();
