@@ -6,22 +6,47 @@
 <meta name="theme-color" content="#ffffff">
 <meta name="description" content="Speakio — AI ile İngilizce öğren">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="learna-ui.css?v=22">
-<link rel="stylesheet" href="ai-tutor.css?v=22">
+<link rel="stylesheet" href="learna-ui.css?v=30">
+<link rel="stylesheet" href="ai-tutor.css?v=30">
 <title>Speakio — AI English Tutor</title>
 </head>
 <body>
 <div class="app-shell"><div id="app"><div class="boot"><div class="boot-logo">S</div><b>Speakio</b><span>AI İngilizce öğretmenin hazırlanıyor…</span></div></div></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="app.js?v=22"></script>
-<script src="content/content-loader.js?v=22"></script>
-<script src="runtime-fixes.js?v=22"></script>
-<script src="build-fix.js?v=22"></script>
-<script src="course-system.js?v=22"></script>
-<script src="premium.js?v=22"></script>
-<script src="premium-ui.js?v=22"></script>
-<script src="learna-ui.js?v=22"></script>
-<script src="ai-tutor.js?v=22"></script>
+<script>
+(()=>{
+ 'use strict';
+ const KEY='speakio_pwa_reset_v30';
+ if(!('serviceWorker' in navigator))return;
+ const controlled=!!navigator.serviceWorker.controller;
+ Promise.resolve().then(async()=>{
+   try{
+     const regs=await navigator.serviceWorker.getRegistrations();
+     await Promise.all(regs.map(r=>r.unregister().catch(()=>false)));
+     const keys=await caches.keys();
+     await Promise.all(keys.map(k=>caches.delete(k)));
+   }catch(e){console.warn('Speakio PWA reset',e)}
+   if(controlled&&!sessionStorage.getItem(KEY)){
+     sessionStorage.setItem(KEY,'1');
+     location.reload();
+     return;
+   }
+   sessionStorage.removeItem(KEY);
+ });
+})();
+</script>
+<script src="app.js?v=30"></script>
+<script src="content/content-loader.js?v=30"></script>
+<script src="home-shell.js?v=30"></script>
+<script src="lazy-router.js?v=30"></script>
+<script src="runtime-fixes.js?v=30"></script>
+<script src="build-fix.js?v=30"></script>
+<script src="course-system.js?v=30"></script>
+<script src="premium.js?v=30"></script>
+<script src="premium-ui.js?v=30"></script>
+<script src="learna-ui.js?v=30"></script>
+<script src="ai-tutor.js?v=30"></script>
+<script src="recovery.js?v=30"></script>
 <script>window.addEventListener('speakio:content-ready',function(){window.Speakio&&window.Speakio.render&&window.Speakio.render();});</script>
 </body>
 </html>
