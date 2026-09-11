@@ -1,6 +1,6 @@
 /* Speakio curriculum runtime */
 // course-system.js is loaded by index.html after this content loader.
-window.SpeakioContent={course:null,ready:false,error:null};
+window.SpeakioContent={course:null,ready:false,error:null,loading:false};
 window.SpeakioSelectedLevel=(localStorage.getItem('speakio_level')||'A1').toUpperCase();
 const SPEAKIO_CURRICULUM_FILES={A1:'a1-curriculum.json',A2:'a2-curriculum.json',B1:'b1-curriculum.json',B2:'b2-curriculum.json',C1:'c1-curriculum.json'};
 const EXERCISES_PER_UNIT=10;
@@ -17,8 +17,28 @@ function expandExercises(unit){
   if(vocab.length>=8){const v=vocab[4],opts=[v[1],...shuffleCopy(vocab.slice(4,8).map(x=>x[1])).filter(x=>x!==v[1]).slice(0,3)];while(opts.length<4)opts.push('diğer seçenek');add({type:'mcq',q:`“${v[0]}” kelimesinin Türkçesi nedir?`,options:opts.slice(0,4),answer:0});}
   return unit;
 }
-async function loadCurriculum(){try{const level=Object.prototype.hasOwnProperty.call(SPEAKIO_CURRICULUM_FILES,window.SpeakioSelectedLevel)?window.SpeakioSelectedLevel:'A1';const res=await fetch('./content/'+SPEAKIO_CURRICULUM_FILES[level],{cache:'no-store'});if(!res.ok)throw new Error('Curriculum HTTP '+res.status);const data=await res.json();if(!data?.course||!Array.isArray(data?.units)||!data.units.length)throw new Error('Invalid curriculum schema');data.units.forEach(expandExercises);window.SpeakioContent.course=data;window.SpeakioContent.ready=true;window.SpeakioContent.level=level;window.dispatchEvent(new CustomEvent('speakio:content-ready',{detail:data}));try{window.Speakio?.render?.()}catch(e){console.error('Speakio direct render',e)}return data;}catch(err){window.SpeakioContent.error=String(err);window.dispatchEvent(new CustomEvent('speakio:content-error',{detail:String(err)}));return null;}}
-window.SpeakioContentReady=loadCurriculum();
+let curriculumPromise=null;
+async function loadCurriculum(){
+  if(window.SpeakioContent.ready&&window.SpeakioContent.course)return window.SpeakioContent.course;
+  if(curriculumPromise)return curriculumPromise;
+  curriculumPromise=(async()=>{try{
+    window.SpeakioContent.loading=true;
+    const level=Object.prototype.hasOwnProperty.call(SPEAKIO_CURRICULUM_FILES,window.SpeakioSelectedLevel)?window.SpeakioSelectedLevel:'A1';
+    const res=await fetch('./content/'+SPEAKIO_CURRICULUM_FILES[level],{cache:'no-store'});
+    if(!res.ok)throw new Error('Curriculum HTTP '+res.status);
+    const data=await res.json();
+    if(!data?.course||!Array.isArray(data?.units)||!data.units.length)throw new Error('Invalid curriculum schema');
+    data.units.forEach(expandExercises);
+    window.SpeakioContent.course=data;window.SpeakioContent.ready=true;window.SpeakioContent.loading=false;window.SpeakioContent.level=level;
+    window.SpeakioContentReady=Promise.resolve(data);
+    window.dispatchEvent(new CustomEvent('speakio:content-ready',{detail:data}));
+    try{window.Speakio?.render?.()}catch(e){console.error('Speakio direct render',e)}
+    return data;
+  }catch(err){window.SpeakioContent.loading=false;window.SpeakioContent.error=String(err);window.SpeakioContentReady=Promise.reject(err);window.SpeakioContentReady.catch(()=>{});window.dispatchEvent(new CustomEvent('speakio:content-error',{detail:String(err)}));throw err;}})();
+  return curriculumPromise;
+}
+window.SpeakioLoadCurriculum=loadCurriculum;
+window.SpeakioContentReady=null;
 window.getSpeakioUnit=id=>window.SpeakioContent.course?.units?.find(u=>Number(u.id)===Number(id))||null;
 window.getSpeakioUnits=()=>window.SpeakioContent.course?.units||[];
 window.getSpeakioVocabulary=()=>getSpeakioUnits().flatMap(u=>(u.vocabulary||[]).map(v=>({unitId:u.id,unit:u.title,en:v[0],tr:v[1]})));
