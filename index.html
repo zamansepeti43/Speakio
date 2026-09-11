@@ -6,9 +6,9 @@
 <meta name="theme-color" content="#ffffff">
 <meta name="description" content="Speakio — AI ile İngilizce öğren">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="learna-ui.css?v=35">
-<link rel="stylesheet" href="learna-inspired.css?v=35">
-<link rel="stylesheet" href="ai-tutor.css?v=35">
+<link rel="stylesheet" href="learna-ui.css?v=36">
+<link rel="stylesheet" href="learna-inspired.css?v=36">
+<link rel="stylesheet" href="ai-tutor.css?v=36">
 <title>Speakio — AI English Tutor</title>
 </head>
 <body>
@@ -17,7 +17,7 @@
 <script>
 (()=>{
  'use strict';
- const KEY='speakio_pwa_reset_v35';
+ const KEY='speakio_pwa_reset_v36';
  if(!('serviceWorker' in navigator))return;
  const controlled=!!navigator.serviceWorker.controller;
  Promise.resolve().then(async()=>{
@@ -36,20 +36,25 @@
  });
 })();
 </script>
-<script src="app.js?v=35"></script>
-<script src="content/content-loader.js?v=35"></script>
-<script src="home-shell.js?v=35"></script>
-<script src="lazy-router.js?v=35"></script>
-<script src="runtime-fixes.js?v=35"></script>
-<script src="build-fix.js?v=35"></script>
-<script src="course-system.js?v=35"></script>
-<script src="premium.js?v=35"></script>
-<script src="premium-ui.js?v=35"></script>
-<script src="learna-ui.js?v=35"></script>
-<script src="ai-tutor.js?v=35"></script>
-<script src="recovery.js?v=35"></script>
-<script src="home-override.js?v=35"></script>
-<script src="home-guard.js?v=35"></script>
-<script>window.addEventListener('speakio:content-ready',function(){window.Speakio&&window.Speakio.render&&window.Speakio.render();});</script>
+<script src="app.js?v=36"></script>
+<script src="content/content-loader.js?v=36"></script>
+<script src="home-shell.js?v=36"></script>
+<script src="lazy-router.js?v=36"></script>
+<script src="runtime-fixes.js?v=36"></script>
+<script src="build-fix.js?v=36"></script>
+<script src="course-system.js?v=36"></script>
+<script src="premium.js?v=36"></script>
+<script src="premium-ui.js?v=36"></script>
+<script src="learna-ui.js?v=36"></script>
+<script src="ai-tutor.js?v=36"></script>
+<script src="recovery.js?v=36"></script>
+<script src="home-override.js?v=36"></script>
+<script src="home-guard.js?v=36"></script>
+<script>
+window.addEventListener('speakio:content-ready',function(){
+  if(window.SpeakioHome&&window.SpeakioHome.render) window.SpeakioHome.render();
+  else if(window.Speakio&&window.Speakio.render) window.Speakio.render();
+});
+</script>
 </body>
 </html>
