@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#ffffff">
 <meta name="description" content="Speakio — AI ile İngilizce öğren">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="learna-ui.css?v=20">
-<link rel="stylesheet" href="ai-tutor.css?v=20">
+<link rel="stylesheet" href="learna-ui.css?v=21">
+<link rel="stylesheet" href="ai-tutor.css?v=21">
 <title>Speakio — AI English Tutor</title>
 </head>
 <body>
@@ -15,23 +15,33 @@
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
 (function(){
-  if(sessionStorage.getItem('speakio-cache-reset')==='1')return;
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{
-      if(window.caches)return caches.keys().then(keys=>Promise.all(keys.filter(k=>/^speakio-/i.test(k)).map(k=>caches.delete(k))));
-    }).then(()=>{sessionStorage.setItem('speakio-cache-reset','1');location.replace('/?fresh='+Date.now());}).catch(()=>{});
+  function freshReload(){try{location.replace('/?fresh='+Date.now())}catch(_){}
   }
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js?v=19',{updateViaCache:'none'}).then(reg=>{
+      reg.update().catch(()=>{});
+      if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'})}
+    }).catch(()=>{});
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!sessionStorage.getItem('speakio-sw19')){sessionStorage.setItem('speakio-sw19','1');freshReload()}});
+  }
+  window.setTimeout(function(){
+    if(!window.SpeakioContent?.ready && !window.Speakio){
+      var root=document.getElementById('app');
+      if(root)root.innerHTML='<main><section><div class="card"><b>Speakio bağlantısı yenileniyor…</b><p class="muted">Eski uygulama önbelleği temizleniyor. Birkaç saniye içinde yeniden açılacak.</p><button class="primary full" onclick="location.replace(\'/?fresh=\'+Date.now())">Yenile</button></div></section></main>';
+      freshReload();
+    }
+  },7000);
 })();
 </script>
-<script src="content/content-loader.js?v=20"></script>
-<script src="runtime-fixes.js?v=20"></script>
-<script src="build-fix.js?v=20"></script>
-<script src="course-system.js?v=20"></script>
-<script src="app.js?v=20"></script>
-<script src="premium.js?v=20"></script>
-<script src="premium-ui.js?v=20"></script>
-<script src="learna-ui.js?v=20"></script>
-<script src="ai-tutor.js?v=20"></script>
+<script src="content/content-loader.js?v=21"></script>
+<script src="runtime-fixes.js?v=21"></script>
+<script src="build-fix.js?v=21"></script>
+<script src="course-system.js?v=21"></script>
+<script src="app.js?v=21"></script>
+<script src="premium.js?v=21"></script>
+<script src="premium-ui.js?v=21"></script>
+<script src="learna-ui.js?v=21"></script>
+<script src="ai-tutor.js?v=21"></script>
 <script>window.addEventListener('speakio:content-ready',()=>window.Speakio?.render?.());</script>
 </body>
 </html>
